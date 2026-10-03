@@ -261,4 +261,6 @@ Create a migration (from the solution root):
 
 ```bash
 dotnet ef migrations add <Name> --project OrishaTest.Infrastructure --startup-project OrishaTest.Infrastructure --output-dir Persistance/Migrations
+
+⭐ **Don't forget to star this repo if you found it useful!**
 ```
