@@ -23,7 +23,6 @@ namespace OrishaTest.Infrastructure
                 });
             });
 
-
             return services;
         }
     }
