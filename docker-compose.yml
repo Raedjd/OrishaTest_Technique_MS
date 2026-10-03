@@ -20,6 +20,7 @@ services:
     networks:
       - orishatestnwk
 
+
   orishatest.client:
     image: ${DOCKER_REGISTRY-}orishatestclient
     container_name: orishatest-client
