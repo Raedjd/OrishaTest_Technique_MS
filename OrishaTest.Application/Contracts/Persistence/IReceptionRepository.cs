@@ -13,5 +13,6 @@ namespace OrishaTest.Application.Contracts.Persistance
         ReceptionStatus GetStatus(int receivedQuantity, int expectedQuantity);
 
         void SetProductReceivedQuantity(Product product, int receivedQuantity);
+        void MarkCarton(Carton carton, bool received);
     }
 }
