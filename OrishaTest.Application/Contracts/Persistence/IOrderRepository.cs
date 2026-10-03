@@ -4,7 +4,7 @@ namespace OrishaTest.Application.Contracts.Persistance
 {
     public interface IOrderRepository : IRepository<Order>
     {
-        Task<List<Order>> GetAllWithDetailsAsync(CancellationToken cancellationToken = default);
+        Task<(List<Order> Items, long TotalCount)> GetPagedWithDetailsAsync(int pageNumber,int pageSize,string? search,CancellationToken cancellationToken = default);
 
         Task<Order?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default);
     }

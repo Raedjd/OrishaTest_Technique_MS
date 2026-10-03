@@ -24,8 +24,4 @@
     <ProjectReference Include="..\OrishaTest.Infrastructure\OrishaTest.Infrastructure.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
 </Project>
