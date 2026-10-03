@@ -173,6 +173,23 @@ Returns the matching products with their `id` and `orderId`. Useful for testing 
 
 ---
 
+## Tests
+
+Unit tests are in `OrishaTest.Tests` (xUnit). They cover the business rules without any database:
+
+- status calculation (`NotReceived` / `Partial` / `Received`)
+- validating all products of a carton one by one marks the carton as received
+- unchecking one product makes the carton and the pallet partial
+- validating a carton or a pallet updates all its products
+- progress calculation ("X / Y items received")
+- request validation (negative quantity)
+
+Run them with:
+
+```bash
+dotnet test
+```
+
 ## Migrations
 
 Create a migration (from the solution root):
