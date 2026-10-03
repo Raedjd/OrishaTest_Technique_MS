@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using OrishaTest.Application.Common.Bases;
 using OrishaTest.Application.DataTransfertObject;
+using OrishaTest.Application.Features.Orders.Commands.UpdateProductReception;
 using OrishaTest.Application.Features.Orders.Queries.GetOrderById;
 using OrishaTest.Application.Features.Orders.Queries.GetOrders;
 
@@ -38,6 +39,23 @@ namespace OrishaTest.Api.Controllers
 
             if (result is null)
                 return NotFound(new { message = $"Order with id '{id}' was not found." });
+
+            return Ok(result);
+        }
+
+        // PUT api/orders/{orderId}/products/{productId}/reception
+        [HttpPut("{orderId:guid}/products/{productId:guid}/reception")]
+        [ProducesResponseType(typeof(OrderDetailDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateProductReception( [FromRoute] Guid orderId,[FromRoute] Guid productId,[FromBody] UpdateProductReceptionCommand command, CancellationToken cancellationToken){
+
+            command.OrderId = orderId;
+            command.ProductId = productId;
+
+            var result = await _mediator.Send(command, cancellationToken);
+            if (result is null)
+                return NotFound(new { message = "Order or product not found." });
 
             return Ok(result);
         }

@@ -7,5 +7,7 @@ namespace OrishaTest.Application.Contracts.Persistance
         Task<(List<Order> Items, long TotalCount)> GetPagedWithDetailsAsync(int pageNumber,int pageSize,string? search,CancellationToken cancellationToken = default);
 
         Task<Order?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default);
+
+        Task<Order?> GetByIdForUpdateAsync(Guid id, CancellationToken cancellationToken = default);
     }
 }

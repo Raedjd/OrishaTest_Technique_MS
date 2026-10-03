@@ -123,5 +123,10 @@ namespace OrishaTest.Application.Services
                 Percentage = expected == 0 ? 0 : (int)Math.Round(100.0 * received / expected)
             };
         }
+
+        public void SetProductReceivedQuantity(Product product, int receivedQuantity)
+        {
+            product.ReceivedQuantity = receivedQuantity;
+        }
     }
 }

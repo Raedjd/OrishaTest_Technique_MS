@@ -11,5 +11,7 @@ namespace OrishaTest.Application.Contracts.Persistance
         OrderDetailDto BuildOrderDetail(Order order);
 
         ReceptionStatus GetStatus(int receivedQuantity, int expectedQuantity);
+
+        void SetProductReceivedQuantity(Product product, int receivedQuantity);
     }
 }
