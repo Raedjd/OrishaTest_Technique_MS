@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using OrishaTest.Application;
 using OrishaTest.Infrastructure;
+using OrishaTest.Infrastructure.Persistance.Seed;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,8 +19,12 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDBContext>();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-    logger.LogInformation("Application migrations PostgreSQL...");
+
+    logger.LogInformation("Applying PostgreSQL migrations...");
     db.Database.Migrate();
+
+    logger.LogInformation("Seeding sample data...");
+    await DataSeeder.SeedAsync(db);
 }
 
 if (app.Environment.IsDevelopment())
