@@ -60,6 +60,94 @@ The seed only runs when the `Orders` table is empty, so restarting the applicati
 All products start with `ReceivedQuantity = 0`.
 
 
+## API Endpoints
+
+Base URL: `http://localhost:5000` — Swagger: `http://localhost:5000/swagger`
+
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/api/orders` | Paginated list of orders with reception progress |
+| `GET` | `/api/orders/{id}` | Order detail: pallets → cartons → products, with statuses and progress |
+| `PUT` | `/api/orders/{orderId}/products/{productId}/reception` | Update the received quantity of a product |
+
+Reception statuses are computed at every level: `NotReceived`, `Partial`, `Received`.
+
+### GET /api/orders
+
+Query parameters: `pageNumber` (default 1), `pageSize` (default 10, max 100), `search` (order number or supplier).
+
+```
+GET /api/orders?pageNumber=1&pageSize=10&search=CMD
+```
+
+```json
+{
+  "Items": [
+    {
+      "id": "…",
+      "number": "CMD-2026",
+      "supplierName": "Sport Distribution",
+      "status": "NotReceived",
+      "palletCount": 2,
+      "progress": { "receivedQuantity": 0, "expectedQuantity": 294, "percentage": 0 }
+    }
+  ],
+  "TotalCount": 2,
+  "PageNumber": 1,
+  "PageSize": 10
+}
+```
+
+### GET /api/orders/{id}
+
+Returns the full hierarchy. Each pallet and carton includes its `expectedQuantity`, `receivedQuantity` and `status`.
+
+| Code | Case |
+|---|---|
+| 200 | Order found |
+| 404 | Order not found |
+
+
+### GET /api/products
+
+Search product lines by order number and/or reference. Useful to get the `orderId` and product `id` needed by the reception endpoint.
+
+Query parameters (both optional):
+
+| Parameter | Example | Description |
+|---|---|---|
+| `orderNumber` | `CMD-2026` | Order number |
+| `ref` | `TSH-RED-M` | Product reference (SKU) |
+
+```
+GET /api/products?orderNumber=CMD-2026&ref=TSH-RED-M
+```
+
+```json
+[
+  {
+    "id": "…",
+    "ref": "TSH-RED-M",
+    "name": "T-Shirt Sport",
+    "color": "Rouge",
+    "size": "M",
+    "cartonCode": "CART-01-A",
+    "palletCode": "PAL-01",
+    "orderId": "…",
+    "orderNumber": "CMD-2026",
+    "expectedQuantity": 50,
+    "receivedQuantity": 0,
+    "status": "NotReceived"
+  }
+]
+```
+
+### PUT /api/orders/{orderId}/products/{productId}/reception
+
+```json
+{ "receivedQuantity": 50 }
+
+
 ```bash
 docker compose down -v
 docker compose up -d --build
