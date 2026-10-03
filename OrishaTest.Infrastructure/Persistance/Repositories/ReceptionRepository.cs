@@ -128,5 +128,21 @@ namespace OrishaTest.Application.Services
         {
             product.ReceivedQuantity = receivedQuantity;
         }
+
+        public void MarkCarton(Carton carton, bool received)
+        {
+            foreach (var product in carton.Products)
+            {
+                product.ReceivedQuantity = received ? product.ExpectedQuantity : 0;
+            }
+        }
+
+        public void MarkPallet(Pallet pallet, bool received)
+        {
+            foreach (var carton in pallet.Cartons)
+            {
+                MarkCarton(carton, received);
+            }
+        }
     }
 }
