@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using OrishaTest.Application.Common.Bases;
 using OrishaTest.Application.DataTransfertObject;
 using OrishaTest.Application.Features.Orders.Commands.UpdateCartonReception;
+using OrishaTest.Application.Features.Orders.Commands.UpdatePalletReception;
 using OrishaTest.Application.Features.Orders.Commands.UpdateProductReception;
 using OrishaTest.Application.Features.Orders.Queries.GetOrderById;
 using OrishaTest.Application.Features.Orders.Queries.GetOrders;
@@ -73,6 +74,22 @@ namespace OrishaTest.Api.Controllers
             var result = await _mediator.Send(command, cancellationToken);
             if (result is null)
                 return NotFound(new { message = "Order or carton not found." });
+
+            return Ok(result);
+        }
+
+        // PUT api/orders/{orderId}/pallets/{palletId}/reception
+        [HttpPut("{orderId:guid}/pallets/{palletId:guid}/reception")]
+        [ProducesResponseType(typeof(OrderDetailDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdatePalletReception([FromRoute] Guid orderId,[FromRoute] Guid palletId, [FromBody] UpdatePalletReceptionCommand command, CancellationToken cancellationToken)
+        {
+            command.OrderId = orderId;
+            command.PalletId = palletId;
+
+            var result = await _mediator.Send(command, cancellationToken);
+            if (result is null)
+                return NotFound(new { message = "Order or pallet not found." });
 
             return Ok(result);
         }

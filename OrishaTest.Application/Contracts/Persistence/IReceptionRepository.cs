@@ -14,5 +14,6 @@ namespace OrishaTest.Application.Contracts.Persistance
 
         void SetProductReceivedQuantity(Product product, int receivedQuantity);
         void MarkCarton(Carton carton, bool received);
+        void MarkPallet(Pallet pallet, bool received);
     }
 }
