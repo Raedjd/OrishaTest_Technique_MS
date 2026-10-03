@@ -12,8 +12,4 @@
     <None Remove="Enums\**" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Entities\" />
-  </ItemGroup>
-
 </Project>

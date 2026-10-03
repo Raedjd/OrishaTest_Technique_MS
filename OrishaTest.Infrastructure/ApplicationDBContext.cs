@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-
+using OrishaTest.Domain.Entities;
 
 namespace OrishaTest.Infrastructure
 {
@@ -9,6 +9,10 @@ namespace OrishaTest.Infrastructure
         {
         }
 
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<Pallet> Pallets { get; set; }
+        public DbSet<Carton> Cartons { get; set; }
+        public DbSet<Product> Products { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
