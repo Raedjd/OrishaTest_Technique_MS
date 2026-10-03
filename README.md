@@ -1,56 +1,73 @@
-# OrishaTest – Warehouse Reception (.NET 10 Clean Architecture + PostgreSQL + Docker Compose)
+# OrishaTest – Warehouse Reception
 
-## Structure
+Web API that lets a warehouse operator view a supplier order and validate its reception at three levels: **pallet**, **carton** and **product**.
 
-| Project | Responsibility |
+**Stack:** .NET 10 · Clean Architecture · EF Core · PostgreSQL · Docker Compose
+
+---
+
+## Getting Started
+
+### With Visual Studio
+
+1. Open `OrishaTest.sln`.
+2. Right-click **docker-compose** → **Set as Startup Project**.
+3. Press **F5**. Swagger opens automatically.
+
+### With the command line
+
+```bash
+docker compose up -d --build
+```
+
+- Swagger: http://localhost:5000/swagger
+- PostgreSQL: `localhost:5432` — user `postgres`, password `postgres`, database `orishatest`
+
+Migrations and sample data are applied automatically at startup.
+
+To reset the database:
+
+```bash
+docker compose down -v
+docker compose up -d --build
+```
+
+---
+
+## Project Structure
+
+| Project | Role |
 |---|---|
-| `OrishaTest.Domain` | Entities and business rules. No dependency on other projects. |
-| `OrishaTest.Application` | Use cases (MediatR commands/queries), DTOs, validation (FluentValidation), repository contracts. |
-| `OrishaTest.Infrastructure` | EF Core `DbContext`, entity configurations, migrations, seed, repository implementations (PostgreSQL). |
-| `OrishaTest.Api` | REST controllers, dependency injection, Swagger, automatic migration and seed at startup. |
+| `OrishaTest.Domain` | Entities |
+| `OrishaTest.Application` | Use cases (MediatR), DTOs, validation, status calculation |
+| `OrishaTest.Infrastructure` | Database (EF Core), migrations, seed, repositories |
+| `OrishaTest.Api` | REST controllers, Swagger |
 
-## Domain Model
+---
 
-A supplier order follows this logistic hierarchy:
+## Data Model
 
 ```
 Order (CMD-2026)
- └── Pallet (PAL-01)          
-      └── Carton (CART-01-A) 
-           └── Product 
+ └── Pallet (PAL-01)
+      └── Carton (CART-01-A)
+           └── Product (TSH-RED-M)
 ```
 
-All entities inherit from `BaseEntity`:
+| Entity | Main fields |
+|---|---|
+| **Order** | `Number`, `SupplierName` |
+| **Pallet** | `Code`, `OrderId` |
+| **Carton** | `Code`, `PalletId` |
+| **Product** | `Ref`, `Name`, `Color`, `Size`, `ExpectedQuantity`, `ReceivedQuantity`, `CartonId` |
 
-### Order
-### Pallet
-### Carton
-### Product
+Every entity has a `Guid Id`. Deleting an order also deletes its pallets, cartons and products.
 
-| Field | Type | Constraints | Example |
-|---|---|---|---|
-| `Ref` | `string` | Required, max 50, **unique per carton** | `TSH-RED-M` |
-| `Name` | `string` | Required, max 200 | `T-Shirt Sport` |
-| `Color` | `string` | Required, max 50 | `Rouge` |
-| `Size` | `string` | Required, max 20 | `M` |
-| `ExpectedQuantity` | `int` | Required | `50` |
-| `ReceivedQuantity` | `int` | Default `0` | `0` |
-| `CartonId` | `Guid` | Foreign key → `Carton` | |
+---
 
-### Database Tables
+## Sample Data
 
-| Table | Unique index | Relationship |
-|---|---|---|
-| `Orders` | `Number` | — |
-| `Pallets` | (`OrderId`, `Code`) | `OrderId` → `Orders` (cascade delete) |
-| `Cartons` | (`PalletId`, `Code`) | `PalletId` → `Pallets` (cascade delete) |
-| `Products` | (`CartonId`, `Ref`) | `CartonId` → `Cartons` (cascade delete) |
-
-## Sample Data (Seed)
-
-Sample orders are inserted into PostgreSQL at startup by `DataSeeder` (`OrishaTest.Infrastructure/Persistance/Seed/DataSeeder.cs`), right after the migrations are applied.
-
-The seed only runs when the `Orders` table is empty, so restarting the application never duplicates data and keeps the reception progress.
+Two orders are created at startup (only if the database is empty):
 
 | Order | Supplier | Pallets | Cartons | Products |
 |---|---|---|---|---|
@@ -59,129 +76,107 @@ The seed only runs when the `Orders` table is empty, so restarting the applicati
 
 All products start with `ReceivedQuantity = 0`.
 
+---
+
+## Reception Status
+
+Each level has a status computed from its quantities:
+
+| Received quantity | Status |
+|---|---|
+| 0 | `NotReceived` |
+| Equal to expected | `Received` |
+| In between | `Partial` |
+
+A carton sums its products, a pallet sums its cartons, an order sums its pallets.
+
+**Example:** carton `CART-01-A` contains 50 T-shirts and 10 shoes.
+- T-shirts received → carton `Partial` (50/60)
+- Shoes received too → carton `Received` (60/60), automatically
+- Shoes set back to 0 → carton `Partial` again
+
+---
 
 ## API Endpoints
 
-Base URL: `http://localhost:5000` — Swagger: `http://localhost:5000/swagger`
-
 | Method | Route | Description |
 |---|---|---|
-| `GET` | `/api/orders` | Paginated list of orders with reception progress |
-| `GET` | `/api/orders/{id}` | Order detail: pallets → cartons → products, with statuses and progress |
-| `PUT` | `/api/orders/{orderId}/products/{productId}/reception` | Update the received quantity of a product |
+| `GET` | `/api/orders` | List of orders (paginated) |
+| `GET` | `/api/orders/{id}` | Order detail with pallets, cartons, products |
+| `GET` | `/api/products` | Find products by order number and reference |
+| `PUT` | `/api/orders/{orderId}/products/{productId}/reception` | Set the received quantity of a product |
+| `PUT` | `/api/orders/{orderId}/cartons/{cartonId}/reception` | Mark a whole carton as received / not received |
+| `PUT` | `/api/orders/{orderId}/pallets/{palletId}/reception` | Mark a whole pallet as received / not received |
 
-Reception statuses are computed at every level: `NotReceived`, `Partial`, `Received`.
+All `PUT` endpoints return the **updated order**, so the client gets the new statuses and progress in one call.
 
 ### GET /api/orders
-
-Query parameters: `pageNumber` (default 1), `pageSize` (default 10, max 100), `search` (order number or supplier).
 
 ```
 GET /api/orders?pageNumber=1&pageSize=10&search=CMD
 ```
 
-```json
-{
-  "Items": [
-    {
-      "id": "…",
-      "number": "CMD-2026",
-      "supplierName": "Sport Distribution",
-      "status": "NotReceived",
-      "palletCount": 2,
-      "progress": { "receivedQuantity": 0, "expectedQuantity": 294, "percentage": 0 }
-    }
-  ],
-  "TotalCount": 2,
-  "PageNumber": 1,
-  "PageSize": 10
-}
-```
+| Parameter | Default | Description |
+|---|---|---|
+| `pageNumber` | 1 | Page number |
+| `pageSize` | 10 | Items per page (max 100) |
+| `search` | — | Order number or supplier |
 
 ### GET /api/orders/{id}
 
-Returns the full hierarchy. Each pallet and carton includes its `expectedQuantity`, `receivedQuantity` and `status`.
+Returns the full tree. Each pallet and carton includes `expectedQuantity`, `receivedQuantity` and `status`. The order includes a `progress` block:
 
-| Code | Case |
-|---|---|
-| 200 | Order found |
-| 404 | Order not found |
-
+```json
+"progress": { "receivedQuantity": 50, "expectedQuantity": 294, "percentage": 17 }
+```
 
 ### GET /api/products
-
-Search product lines by order number and/or reference. Useful to get the `orderId` and product `id` needed by the reception endpoint.
-
-Query parameters (both optional):
-
-| Parameter | Example | Description |
-|---|---|---|
-| `orderNumber` | `CMD-2026` | Order number |
-| `ref` | `TSH-RED-M` | Product reference (SKU) |
 
 ```
 GET /api/products?orderNumber=CMD-2026&ref=TSH-RED-M
 ```
 
-```json
-[
-  {
-    "id": "…",
-    "ref": "TSH-RED-M",
-    "name": "T-Shirt Sport",
-    "color": "Rouge",
-    "size": "M",
-    "cartonCode": "CART-01-A",
-    "palletCode": "PAL-01",
-    "orderId": "…",
-    "orderNumber": "CMD-2026",
-    "expectedQuantity": 50,
-    "receivedQuantity": 0,
-    "status": "NotReceived"
-  }
-]
-```
+Returns the matching products with their `id` and `orderId`. Useful for testing the `PUT` endpoints.
 
-### PUT /api/orders/{orderId}/products/{productId}/reception
+### PUT .../products/{productId}/reception
 
 ```json
 { "receivedQuantity": 50 }
-
-
-```bash
-docker compose down -v
-docker compose up -d --build
 ```
 
-## Getting Started
+### PUT .../cartons/{cartonId}/reception and .../pallets/{palletId}/reception
 
-### From Visual Studio
-
-1. Open `OrishaTest.sln`.
-2. Right-click **docker-compose** → **Set as Startup Project**.
-3. Press **F5** → Swagger opens; PostgreSQL starts before the API thanks to the health check.
-
-EF Core migrations and the seed are applied automatically when the application starts.
-
-### From the Command Line
-
-```bash
-docker compose up -d --build
+```json
+{ "received": true }
 ```
 
-- Swagger: http://localhost:5000/swagger
-- PostgreSQL: `localhost:5432` (`postgres` / `postgres`), database: `orishatest`
+- `true`: all products get `receivedQuantity = expectedQuantity`
+- `false`: all products go back to `0`
+
+### Response codes
+
+| Code | Case |
+|---|---|
+| 200 | Success |
+| 400 | Invalid data (negative quantity, quantity above expected, invalid page size) |
+| 404 | Order, pallet, carton or product not found (or not in this order) |
+
+---
+
+## Choices
+
+- **No order creation:** as allowed by the specification, orders are seeded at startup.
+- **Quantity instead of a checkbox:** a product stores a received quantity, so partial deliveries are supported. Checking a carton or pallet fills every product with its expected quantity.
+- **Statuses are calculated, not stored:** carton, pallet and order statuses are always computed from product quantities, so they can never be inconsistent.
+- **No overdelivery:** a received quantity cannot exceed the expected quantity.
+- **Save on every action:** each click is saved immediately, so no work is lost if the operator is interrupted.
+
+---
 
 ## Migrations
 
-Create a new migration (from the solution root):
+Create a migration (from the solution root):
 
 ```bash
-dotnet ef migrations add <MigrationName> --project OrishaTest.Infrastructure --startup-project OrishaTest.Infrastructure --output-dir Persistance/Migrations
-```
-
-Apply migrations manually (PostgreSQL running on `localhost:5432`):
-
-```bash
-dotnet ef database update --project OrishaTest.Infrastructure --startup-project OrishaTest.Infrastructure
+dotnet ef migrations add <Name> --project OrishaTest.Infrastructure --startup-project OrishaTest.Infrastructure --output-dir Persistance/Migrations
 ```
