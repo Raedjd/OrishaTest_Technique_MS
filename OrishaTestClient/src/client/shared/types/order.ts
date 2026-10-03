@@ -1,9 +1,7 @@
 import { Product } from "@client/shared/types/product";
 
-// Statut calculé par l'API à chaque niveau
 export type ReceptionStatus = "NotReceived" | "Partial" | "Received";
 
-// Jauge "X / Y articles reçus"
 export interface Progress {
     receivedQuantity: number;
     expectedQuantity: number;
@@ -28,7 +26,7 @@ export interface Pallet {
     cartons: Carton[];
 }
 
-// GET /api/orders (une ligne de la liste)
+
 export interface OrderSummary {
     id: string;
     number: string;
@@ -38,7 +36,7 @@ export interface OrderSummary {
     progress: Progress;
 }
 
-// GET /api/orders/{id} et réponse de tous les PUT de réception
+
 export interface OrderDetail {
     id: string;
     number: string;
@@ -48,7 +46,7 @@ export interface OrderDetail {
     pallets: Pallet[];
 }
 
-// Body de PUT .../cartons/{id}/reception et .../pallets/{id}/reception
+
 export interface UpdateReceptionPayload {
     received: boolean;
 }
