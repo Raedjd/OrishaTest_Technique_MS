@@ -1,31 +1,58 @@
-# OrishaTest – Warehouse Reception
+# OrishaTest – Warehouse Reception/ Sign in with the demo account(hardcoded): `raed.jaiidi@gmail.com` / `Admin123`
 
-Web API that lets a warehouse operator view a supplier order and validate its reception at three levels: **pallet**, **carton** and **product**.
 
-**Stack:** .NET 10 · Clean Architecture · EF Core · PostgreSQL · Docker Compose
+Web application that lets a warehouse operator view a supplier order and validate its reception at three levels: **pallet**, **carton** and **product**.
+
+| Part | Stack |
+|---|---|
+| Back-end | .NET 10 · Clean Architecture · EF Core · PostgreSQL · MediatR · FluentValidation |
+| Front-end | Next.js 15 (App Router) · React 18 · TypeScript · Tailwind CSS · shadcn/ui · axios |
+| Tooling | Docker Compose · xUnit |
 
 ---
 
 ## Getting Started
 
-### With Visual Studio
+### Everything with Docker (recommended)
 
-1. Open `OrishaTest.sln`.
-2. Right-click **docker-compose** → **Set as Startup Project**.
-3. Press **F5**. Swagger opens automatically.
-
-### With the command line
+From the repository root:
 
 ```bash
 docker compose up -d --build
 ```
 
-- Swagger: http://localhost:5000/swagger
-- PostgreSQL: `localhost:5432` — user `postgres`, password `postgres`, database `orishatest`
+| Service | URL |
+|---|---|
+| Front-end | http://localhost:3050 |
+| API (Swagger) | http://localhost:5001/swagger |
+| PostgreSQL | `localhost:5432` — user `postgres`, password `postgres`, database `orishatest` |
 
-Migrations and sample data are applied automatically at startup.
+Sign in with the demo account(hardcoded): `raed.jaiidi@gmail.com` / `Admin123`
 
-To reset the database:
+Migrations and sample data are applied automatically when the API starts.
+
+### Front-end in development mode
+
+Start the API and the database with Docker, then run the client locally:
+
+```bash
+docker compose up -d --build orishatest.api postgres
+cd OrishaTestClient
+npm install
+npm run dev
+```
+
+Open http://localhost:3000.
+
+The client calls the API at `http://localhost:5001/api/` by default. Override it with the `NEXT_PUBLIC_API_URL` environment variable if needed. The API allows calls from `http://localhost:3000` and `http://localhost:3050` (CORS).
+
+### With Visual Studio
+
+1. Open `OrishaTest.sln`.
+2. Right-click **docker-compose** → **Set as Startup Project**.
+3. Press **F5**.
+
+### Reset the database
 
 ```bash
 docker compose down -v
@@ -36,12 +63,14 @@ docker compose up -d --build
 
 ## Project Structure
 
-| Project | Role |
+| Folder | Role |
 |---|---|
 | `OrishaTest.Domain` | Entities |
 | `OrishaTest.Application` | Use cases (MediatR), DTOs, validation, status calculation |
 | `OrishaTest.Infrastructure` | Database (EF Core), migrations, seed, repositories |
-| `OrishaTest.Api` | REST controllers, Swagger |
+| `OrishaTest.Api` | REST controllers, Swagger, CORS |
+| `OrishaTest.Tests` | Unit tests (xUnit) |
+| `OrishaTestClient` | Next.js front-end |
 
 ---
 
@@ -97,6 +126,40 @@ A carton sums its products, a pallet sums its cartons, an order sums its pallets
 
 ---
 
+## Front-end
+
+### Pages
+
+| Route | Description |
+|---|---|
+| `/dashboard/shops/orders` | Supplier orders with their reception progress (search + pagination) |
+| `/dashboard/shops/orders/[id]` | Order reception: pallets → cartons → products, with checkboxes and progress gauge |
+| `/dashboard/shops/products` | Find a product by order number or reference and set its received quantity |
+
+### How reception works in the interface
+
+- Each pallet, carton and product has a checkbox:
+  - checked: received
+  - dash: partially received
+  - empty: not received
+- Checking a pallet or a carton marks everything inside it as received. Unchecking resets it to 0.
+- Each product also has a quantity field for partial deliveries (from 0 to the expected quantity).
+- A gauge shows "X / Y items received" for the whole order.
+- To keep the screen light, pallets are collapsed by default (only the first pallet left to check is open), and "Hide received items" shows only what remains to check.
+
+### Client structure
+
+| Folder | Content |
+|---|---|
+| `src/app` | Routes (App Router) |
+| `src/client/components/dashboard/shops/orders` | Order list, reception tree, status badge, checkbox and gauge |
+| `src/client/components/dashboard/shops/products` | Product search and received quantity dialog |
+| `src/client/hooks` | `useOrders`, `useOrderDetail`, `useProduct` |
+| `src/client/services` | API calls (`orders.service.ts`, `products.service.ts`) |
+| `src/client/shared/types` | Types matching the API DTOs (`order.ts`, `product.ts`) |
+
+---
+
 ## API Endpoints
 
 | Method | Route | Description |
@@ -136,7 +199,7 @@ Returns the full tree. Each pallet and carton includes `expectedQuantity`, `rece
 GET /api/products?orderNumber=CMD-2026&ref=TSH-RED-M
 ```
 
-Returns the matching products with their `id` and `orderId`. Useful for testing the `PUT` endpoints.
+Returns the matching products with their `id` and `orderId`.
 
 ### PUT .../products/{productId}/reception
 
@@ -163,16 +226,6 @@ Returns the matching products with their `id` and `orderId`. Useful for testing 
 
 ---
 
-## Choices
-
-- **No order creation:** as allowed by the specification, orders are seeded at startup.
-- **Quantity instead of a checkbox:** a product stores a received quantity, so partial deliveries are supported. Checking a carton or pallet fills every product with its expected quantity.
-- **Statuses are calculated, not stored:** carton, pallet and order statuses are always computed from product quantities, so they can never be inconsistent.
-- **No overdelivery:** a received quantity cannot exceed the expected quantity.
-- **Save on every action:** each click is saved immediately, so no work is lost if the operator is interrupted.
-
----
-
 ## Tests
 
 Unit tests are in `OrishaTest.Tests` (xUnit). They cover the business rules without any database:
@@ -184,11 +237,23 @@ Unit tests are in `OrishaTest.Tests` (xUnit). They cover the business rules with
 - progress calculation ("X / Y items received")
 - request validation (negative quantity)
 
-Run them with:
-
 ```bash
 dotnet test
 ```
+
+---
+
+## Choices
+
+- **No order creation:** as allowed by the specification, orders are seeded at startup.
+- **Quantity instead of a simple checkbox:** a product stores a received quantity, so partial deliveries are supported. Checking a product fills its expected quantity; checking a carton or pallet fills every product inside it.
+- **Statuses are calculated, not stored:** carton, pallet and order statuses are always computed from product quantities, so they can never be inconsistent.
+- **No overdelivery:** a received quantity cannot exceed the expected quantity.
+- **Save on every action:** each click is saved immediately, so no work is lost if the operator is interrupted. The API returns the updated order, so the interface never recalculates statuses on its own.
+- **Light interface:** collapsible tree, only the first pallet to check is open, and an option to hide what is already received.
+- **Mock login:** the front-end uses a demo account; authentication is out of the scope of this test.
+
+---
 
 ## Migrations
 
