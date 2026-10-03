@@ -21,15 +21,10 @@ import {
     CollapsibleTrigger,
 } from "@/client/shared/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
-import { mainNavItems, ShopsItems } from "./NavItems";
+import {ShopsItems } from "./NavItems";
 import { cn } from "@client/lib/utils";
 
-interface AppSidebarProps {
-    selectedTenant: string;
-    onTenantChange: (tenantId: string) => void;
-}
-
-export function AppSidebar({ selectedTenant, onTenantChange }: AppSidebarProps) {
+export function AppSidebar() {
     const pathname = usePathname();
     const [modulesOpen, setModulesOpen] = useState(true);
     const { state, isMobile } = useSidebar();
@@ -67,34 +62,12 @@ export function AppSidebar({ selectedTenant, onTenantChange }: AppSidebarProps) 
 
             <SidebarContent>
                 {/* Main Navigation */}
-                <SidebarGroup>
-                    <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-                    <SidebarGroupContent>
-                        <SidebarMenu>
-                            {mainNavItems.map((item) => (
-                                <SidebarMenuItem key={item.title}>
-                                    <SidebarMenuButton
-                                        asChild
-                                        isActive={pathname === item.url}
-                                        tooltip={item.title}
-                                    >
-                                        <Link href={item.url}>
-                                            <item.icon />
-                                            <span>{item.title}</span>
-                                        </Link>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                            ))}
-                        </SidebarMenu>
-                    </SidebarGroupContent>
-                </SidebarGroup>
-
-                {/* Administration - Collapsible */}
+                {/* Shop - Collapsible */}
                 <Collapsible open={modulesOpen} onOpenChange={setModulesOpen}>
                     <SidebarGroup>
                         <CollapsibleTrigger asChild>
                             <SidebarGroupLabel className="cursor-pointer hover:bg-sidebar-accent flex items-center justify-between">
-                                <span>Administration</span>
+                                <span>Shop</span>
                                 <ChevronDown
                                     className={cn(
                                         "h-4 w-4 transition-transform",
