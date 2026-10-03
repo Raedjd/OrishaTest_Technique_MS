@@ -51,7 +51,7 @@ export default function Products() {
     // ============================================
     // HOOKS
     // ============================================
-    const { products, loadingProducts, errorProducts, fetchProducts} = useProduct();
+    const { products, loadingProducts, errorProducts, fetchProducts, updateReceivedQuantity } = useProduct();
     const { snackbar, snackbarSuccess, snackbarError, hideSnackbar } = useSnackbar();
 
     const {
@@ -100,7 +100,19 @@ export default function Products() {
         setDialogOpen(true);
     };
 
+    const onSubmit = async (data: ProductFormValues) => {
+        if (!selectedProduct) return;
 
+        const error = await updateReceivedQuantity(selectedProduct, data.ReceivedQuantity);
+        if (error) {
+            snackbarError(error);
+            return;
+        }
+
+        snackbarSuccess(`Received quantity saved for ${selectedProduct.ref}.`);
+        setDialogOpen(false);
+        await fetchProducts(filters);
+    };
 
     // ============================================
     // RENDER
@@ -198,6 +210,41 @@ export default function Products() {
                         </DialogDescription>
                     </DialogHeader>
 
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+                        <input type="hidden" {...register("ExpectedQuantity", { valueAsNumber: true })} />
+
+                        <div className="space-y-2">
+                            <Label htmlFor="receivedQuantity">
+                                Received quantity <span className="text-destructive">*</span>
+                            </Label>
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    id="receivedQuantity"
+                                    type="number"
+                                    step="1"
+                                    min={0}
+                                    max={selectedProduct?.expectedQuantity}
+                                    {...register("ReceivedQuantity", { valueAsNumber: true })}
+                                    className={errors.ReceivedQuantity ? "border-destructive focus-visible:ring-destructive" : ""}
+                                    data-testid="input-received-quantity"
+                                />
+                                <span className="text-sm text-muted-foreground whitespace-nowrap tabular-nums">
+                                    / {selectedProduct?.expectedQuantity}
+                                </span>
+                            </div>
+                            <FieldError message={errors.ReceivedQuantity?.message} />
+                        </div>
+
+                        <div className="flex gap-2 justify-end pt-4">
+                            <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={isSubmitting} data-testid="button-save-quantity">
+                                {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                                Save quantity
+                            </Button>
+                        </div>
+                    </form>
                 </DialogContent>
             </Dialog>
 

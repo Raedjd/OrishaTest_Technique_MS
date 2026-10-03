@@ -1,9 +1,10 @@
 import * as Yup from "yup";
 
+// Converts "" or NaN (empty number input) to undefined so "required" works
 const toNumber = (value: number, originalValue: unknown) =>
     originalValue === "" || Number.isNaN(value) ? undefined : value;
 
-
+// Saisie de la quantité reçue d'un produit (PUT .../products/{id}/reception)
 export const validationProductSchema = Yup.object({
     ExpectedQuantity: Yup.number().required(),
     ReceivedQuantity: Yup.number()

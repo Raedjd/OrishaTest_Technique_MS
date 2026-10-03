@@ -3,7 +3,7 @@ import { Package, Pencil } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@client/shared/components/ui/card";
 import { Button } from "@client/shared/components/ui/button";
 import { ProductLookup } from "@client/shared/types/product";
-
+import { ReceptionStatusBadge } from "@client/components/dashboard/shops/orders/receptionStatus";
 
 interface ProductCardProps {
     product: ProductLookup;
@@ -23,6 +23,7 @@ export function ProductCard({ product, onEditQuantity }: ProductCardProps) {
                         {product.ref} — {product.color}, size {product.size}
                     </CardDescription>
                 </div>
+                <ReceptionStatusBadge status={product.status} />
             </CardHeader>
 
             <CardContent className="space-y-3">
