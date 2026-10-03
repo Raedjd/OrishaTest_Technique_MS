@@ -3,6 +3,7 @@ import { ProductFilters, ProductLookup } from "@client/shared/types/product";
 import { productsService } from "@client/services/products.service";
 
 import { getApiErrorMessage } from "@client/lib/apiError";
+import {ordersService} from "@client/services/orders.service";
 
 
 export function useProduct() {
@@ -23,11 +24,20 @@ export function useProduct() {
     }, []);
 
 
+    const updateReceivedQuantity = async (product: ProductLookup, receivedQuantity: number): Promise<string | null> => {
+        try {
+            await ordersService.updateProductReception(product.orderId, product.id, receivedQuantity);
+            return null;
+        } catch (err) {
+            return getApiErrorMessage(err, 'The received quantity could not be saved.');
+        }
+    };
 
     return {
         products,
         loadingProducts,
         errorProducts,
         fetchProducts,
+        updateReceivedQuantity,
     };
 }
