@@ -26,9 +26,6 @@ services:
     build:
       context: ./OrishaTestClient
       dockerfile: Dockerfile
-    env_file:
-      - path: .env.production
-        required: false
     environment:
       - PORT=3050
     ports:

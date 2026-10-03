@@ -1,15 +1,17 @@
 
 import CryptoJS from 'crypto-js';
-import {DecodedToken,LoginResult} from "@client/shared/types/auth";
+import {DecodedToken, LoginResult} from "@client/shared/types/auth";
 import {MOCK_TOKEN} from "@client/lib/mockAuth";
 
+
+const baseURL: string = process.env.NEXT_PUBLIC_API_URL || '';
 const ENCRYPTION_KEY ='ProdINNOV@2024$VerySecureKey#Encrypt';
 let inMemoryToken: string | null = null;
 
 
 export async function loginUser(username: string, password: string): Promise<LoginResult> {
     try {
-        if (username !== "raed.jaidi@gmail.com" || password !== "Admin123") {
+        if (username !== "raed.jaiidi@gmail.com" || password !== "Admin123") {
             return {
                 success: false,
                 error: 401
@@ -92,6 +94,34 @@ export const isTokenExpired = (): boolean => {
     }
 };
 
+export const getTenantId = (): string | null => {
+    if (typeof window !== 'undefined') {
+        const encryptedTenant = getCookie('tenant_id');
+        if (encryptedTenant) {
+            return decryptData(encryptedTenant);
+        }
+
+        // Si pas trouvé, essayer de décoder depuis le token
+        const token = getTokenFromSession();
+        if (token) {
+            const decoded = decodeJWT(token);
+            if (decoded?.["X-Company-Db"] || decoded?.tenant_id || decoded?.tenant) {
+                const rawTenant =
+                    decoded?.["X-Company-Db"] ??
+                    decoded?.tenant_id ??
+                    decoded?.tenant;
+
+                if (rawTenant) {
+                    const tenantId = rawTenant.toString();
+                    return tenantId;
+                }
+            }
+        }
+    }
+
+    return null;
+};
+
 
 export const getUsername = (): string | null => {
     if (typeof window === 'undefined') {
@@ -168,11 +198,13 @@ export const getRoles = (): string[] => {
 export const getUserInfo = (): {
     username: string | null;
     email: string | null;
+    tenantId: string | null;
     roles: string[] | []
 } => {
     return {
         username: getUsername(),
         email: getUserEmail(),
+        tenantId: getTenantId(),
         roles: getRoles()
     };
 };

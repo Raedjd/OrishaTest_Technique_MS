@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { loginUser } from "@/client/services/authorization/auth";
 import { useSnackbar } from "@/client/shared/hooks/useSnackbar";
 import Snackbar from "@/client/shared/components/Snackbar";
@@ -38,7 +39,7 @@ export default function LoginForm() {
             if (result.success && result.token) {
                 router.push("/dashboard");
             } else if (result.error === 401) {
-                setError("Invalid email or password!");
+                setError("Invalid username or password!");
             } else {
                 snackbarError("An unexpected error occurred. Please try again.");
             }

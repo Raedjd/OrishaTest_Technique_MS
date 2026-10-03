@@ -34,7 +34,7 @@
 
 .dark .ql-toolbar button.ql-active,
 .dark .ql-toolbar .ql-picker-label.ql-active {
-  color: #ff3d9e !important;
+  color: #ff3d9e !important; /* magenta Orisha éclairci */
 }
 
 .dark .ql-stroke {

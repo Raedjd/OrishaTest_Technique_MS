@@ -1,7 +1,6 @@
 import axios from "axios";
-import { ApiError } from "@/shared/types/shared";
+import { ApiError } from "@client/shared/types/shared";
 
-// Transforme une erreur axios en message lisible, à partir du format renvoyé par l'API
 export function getApiErrorMessage(error: unknown, fallback: string): string {
     if (axios.isAxiosError(error)) {
         const data = error.response?.data as ApiError | undefined;
