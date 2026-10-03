@@ -8,6 +8,8 @@ namespace OrishaTest.Application.Contracts.Persistance
 
         Task<Order?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default);
 
+        Task<List<Product>> SearchProductsAsync(string? orderNumber, string? reference, CancellationToken cancellationToken = default);
+
         Task<Order?> GetByIdForUpdateAsync(Guid id, CancellationToken cancellationToken = default);
     }
 }

@@ -60,6 +60,28 @@ namespace OrishaTest.Infrastructure.Persistance.Repositories
                 .FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
         }
 
+        public async Task<List<Product>> SearchProductsAsync(string? orderNumber, string? reference, CancellationToken cancellationToken = default)
+        {
+            IQueryable<Product> query = _dbContext.Products
+                .AsNoTracking()
+                .Include(p => p.Carton)
+                    .ThenInclude(c => c.Pallet)
+                        .ThenInclude(pl => pl.Order)
+                .Where(p => !p.Carton.Pallet.Order.IsDeleted);
+
+            if (!string.IsNullOrWhiteSpace(orderNumber))
+                query = query.Where(p => p.Carton.Pallet.Order.Number == orderNumber.Trim());
+
+            if (!string.IsNullOrWhiteSpace(reference))
+                query = query.Where(p => p.Ref == reference.Trim());
+
+            return await query
+                .OrderBy(p => p.Carton.Pallet.Order.Number)
+                .ThenBy(p => p.Carton.Code)
+                .ThenBy(p => p.Ref)
+                .ToListAsync(cancellationToken);
+        }
+
         public async Task<Order?> GetByIdForUpdateAsync(Guid id, CancellationToken cancellationToken = default)
         {
             return await _dbContext.Orders
