@@ -1,0 +1,44 @@
+name: orishatest
+
+networks:
+  orishatestnwk:
+    name: orishatestnwk
+    driver: bridge
+
+services:
+  orishatest.api:
+    image: ${DOCKER_REGISTRY-}orishatestapi
+    container_name: orishatest-api
+    build:
+      context: .
+      dockerfile: OrishaTest.Api/Dockerfile
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - orishatestnwk
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: orishatest-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    networks:
+      - orishatestnwk
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-data:
