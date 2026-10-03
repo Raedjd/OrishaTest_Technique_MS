@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OrishaTest.Application.Contracts.Persistance;
+using OrishaTest.Application.Services;
+using OrishaTest.Infrastructure.Persistance.Repositories;
 
 namespace OrishaTest.Infrastructure
 {
@@ -22,6 +25,9 @@ namespace OrishaTest.Infrastructure
                         errorCodesToAdd: null);
                 });
             });
+
+            services.AddScoped<IOrderRepository, OrderRepository>();
+            services.AddScoped<IReceptionRepository, ReceptionRepository>();
 
             return services;
         }
