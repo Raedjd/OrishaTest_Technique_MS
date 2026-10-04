@@ -24,7 +24,7 @@ docker compose up -d --build
 | Service | URL |
 |---|---|
 | Front-end | http://localhost:3050 |
-| API (Swagger) | http://localhost:5001/swagger |
+| API (Swagger) | http://localhost:5000/swagger |
 | PostgreSQL | `localhost:5432` — user `postgres`, password `postgres`, database `orishatest` |
 
 Sign in with the demo account(hardcoded): `raed.jaiidi@gmail.com` / `Admin123`
@@ -44,7 +44,7 @@ npm run dev
 
 Open http://localhost:3000.
 
-The client calls the API at `http://localhost:5001/api/` by default. Override it with the `NEXT_PUBLIC_API_URL` environment variable if needed. The API allows calls from `http://localhost:3000` and `http://localhost:3050` (CORS).
+The client calls the API at `http://localhost:5000/api/` by default. Override it with the `NEXT_PUBLIC_API_URL` environment variable if needed. The API allows calls from `http://localhost:3000` and `http://localhost:3050` (CORS).
 
 ### With Visual Studio
 
@@ -254,6 +254,10 @@ dotnet test
 - **Mock login:** the front-end uses a demo account; authentication is out of the scope of this test.
 
 ---
+
+Note:
+Last commit for hotfix: HTTP only in docker: the api runs over HTTP(port 5000) inside docker.HTTPS required the ASP.NET developer certificate from the other machine.
+Please understand the cause of commit hotfix
 
 ## Migrations
 

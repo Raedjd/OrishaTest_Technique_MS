@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   env: {
-    NEXT_PUBLIC_API_URL: "https://localhost:5001/api/"
+    NEXT_PUBLIC_API_URL: "http://localhost:5000/api/"
   },
 };
 
